@@ -1,4 +1,5 @@
 package atm.app.baitap;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -7,20 +8,29 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.Vector;
+
 public class Bank extends Menu {
-    protected static Vector<Account> aList = new Vector<Account>(20, 10);
-    protected static Vector<Customer> cList = new Vector<Customer>(20, 10);
-    static String[] mc = {"Menu 1", "Vietcombank banking counters welcome !", "Đăng ký thành viên", "Đăng nhập thành viên", "Nộp tiền vào tài khoản", "Xem danh sách thành viên", "Kết thúc"};
+    protected static ArrayList<Account> aList = new ArrayList<>(20);
+    protected static ArrayList<Customer> cList = new ArrayList<>(20);
+    static String[] mc = {"Menu 1",
+            "Vietcombank banking counters welcome !",
+            "Đăng ký thành viên",
+            "Đăng nhập thành viên",
+            "Nộp tiền vào tài khoản",
+            "Xem danh sách thành viên",
+            "Kết thúc"};
     Customer curenrCustomer;
     Account currentAccount;
+
     public Bank() {
         super(mc);
         loadData("account.txt");
     }
+
     public Bank(String[] mang) {
         super(mc);
     }
@@ -54,7 +64,6 @@ public class Bank extends Menu {
                 viewCustomerList();
                 break;
             case 5:
-//                saveData("account.txt");
                 System.out.println("\t\tVietcombank hẹn gặp lại quý khách !");
                 System.exit(0);
         }
@@ -77,18 +86,16 @@ public class Bank extends Menu {
             Customer c = new Customer(ten, cmnd, ngaySinh);
             cList.add(c);
 
-            //Random rand = new Random();
-            //int randomNum = minimum + rand.nextInt((maximum - minimum) + 1);
             Random rd = new Random();
-            int pin = 100000 + rd.nextInt((900000 - 100000) + 1);//pin = [100000, 900000]
+            int pin = 100000 + rd.nextInt((900000 - 100000) + 1); // pin = [100000, 900000]
             double soDu = 10000;
             Account a = new Account(c, soDu, pin);
             aList.add(a);
             System.out.println("\n>>> Đăng ký tài khoản thành công, xin chào " + ten + " !");
             System.out.println("\t------- *** -------");
             System.out.println("Mã KH của bạn: " + c.getMaKH() + "\nMật khẩu mặc định: " + c.getMatKhau());
-            DecimalFormat df = new DecimalFormat("#,##0"); // Định dạng số dư
-            System.out.println("Bạn được cấp số tài khoản: " + a.getSoTK()+
+            DecimalFormat df = new DecimalFormat("#,##0");
+            System.out.println("Bạn được cấp số tài khoản: " + a.getSoTK() +
                     "\nPin mặc định: " + a.getPin() +
                     "\nSố dư mặc định: " + df.format(a.getSoDu()) + " VNĐ");
         } catch (Exception e) {
@@ -156,13 +163,8 @@ public class Bank extends Menu {
         } else {
             Collections.sort(cList);
             System.out.printf("%-7s| %-16s| %-15s", "Mã KH", "Họ tên", "Mật khẩu");
-            for (int i = 0; i < cList.size(); i++) {
-                if (i < cList.size() - 1) {
-                    if ((cList.get(i).getMaKH()).equals(cList.get(i + 1).getMaKH())) {
-                        continue;
-                    }
-                }
-                System.out.print(cList.get(i));
+            for (Customer c : cList) {
+                System.out.println(c);
             }
         }
         System.out.println("\n\t ------- *** -------");
@@ -223,7 +225,7 @@ public class Bank extends Menu {
         int pin = Integer.parseInt(array[6]);
         double soDu = Double.parseDouble(array[7]);
         int count = soTK;
-        //Đảm bảo CountSoTK cuối cùng khi load xong file là lớn nhất để không bị trùng, vì file sắp xếp theo tên Khách hàng
+        // Đảm bảo CountSoTK cuối cùng khi load xong file là lớn nhất để không bị trùng, vì file sắp xếp theo tên Khách hàng
         if (count >= Account.getCountSoTK()) {
             Account.setCountSoTK(++count);
         }
@@ -243,20 +245,19 @@ public class Bank extends Menu {
         aList.add(a);
     }
 
-    public static Vector<Account> getaList() {
+    public static ArrayList<Account> getaList() {
         return aList;
     }
 
-    public static void setaList(Vector<Account> aList) {
+    public static void setaList(ArrayList<Account> aList) {
         Bank.aList = aList;
     }
 
-    public static Vector<Customer> getcList() {
+    public static ArrayList<Customer> getcList() {
         return cList;
     }
 
-    public static void setcList(Vector<Customer> cList) {
+    public static void setcList(ArrayList<Customer> cList) {
         Bank.cList = cList;
     }
-
 }

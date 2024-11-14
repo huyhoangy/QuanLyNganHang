@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 
+import static atm.app.baitap.Bank.saveData;
+
 public class Account extends Customer implements MuaVeXemPhim {
     private int soTK, pin;
     private Double soDu;
@@ -75,7 +77,7 @@ public class Account extends Customer implements MuaVeXemPhim {
 
             // Hiển thị menu
             for (int i = 0; i < menu.length; i++) {
-                System.out.println((i + 1) + ". " + menu[i]); // Thêm khoảng cách giữa số và tên mục
+                System.out.println((i + 1) + ". " + menu[i]);
             }
 
             System.out.print("Lựa chọn của bạn: ");
@@ -84,14 +86,14 @@ public class Account extends Customer implements MuaVeXemPhim {
                 if (option < 1 || option > menu.length) {
                     System.out.println("Lựa chọn không hợp lệ. Vui lòng chọn từ 1 đến " + menu.length + ".");
                 } else {
-                    execute(option); // Gọi phương thức execute để xử lý tùy chọn
+                    execute(option);
                 }
             } catch (NumberFormatException e) {
                 System.out.println("Lỗi: Vui lòng nhập một số hợp lệ.");
-                option = -1; // Đặt lại option để tiếp tục vòng lặp
+                option = -1;
             }
 
-        } while (option != menu.length); // Lựa chọn thoát là tùy chọn cuối cùng
+        } while (option != menu.length);
 
         System.out.println("\t\tVietcombank ATM hẹn gặp lại quý khách !");
     }
@@ -105,24 +107,34 @@ public class Account extends Customer implements MuaVeXemPhim {
                 System.out.println("Lỗi: Số tiền cần rút phải lớn hơn 0!");
                 return;
             }
-            withdraw(amount, "Rút tiền mặt tại ATM");
-            System.out.println(">>> Rút tiền thành công !");
+
+            if (withdraw(amount, "Rút tiền mặt tại ATM")) {
+                System.out.println(">>> Rút tiền thành công !");
+            }
         } catch (NumberFormatException e) {
             System.out.println("Lỗi: nhập sai kiểu số !");
         }
     }
 
-    public void withdraw(double amount, String description) {
+    public boolean withdraw(double amount, String description) {
         NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
+
+        double maxDebt = 10000000;
+
         if (amount > soDu) {
             double debt = amount - soDu;
+            if (debt > maxDebt) {
+                System.out.println("Lỗi: Số tiền ghi nợ không được vượt quá " + formatter.format(maxDebt) + " VNĐ!");
+                return false;
+            }
             System.out.println("Số dư không đủ, ghi nợ số tiền: - " + formatter.format(debt));
             transactionDiary.add(new Transaction(this, amount, "Rút Tiền", description));
             soDu -= amount;
+            return true;
         } else {
             transactionDiary.add(new Transaction(this, amount, "Rút Tiền", description));
             soDu -= amount;
-            System.out.println("Số tiền rút: " + formatter.format(amount));
+            return true;
         }
     }
 
@@ -168,36 +180,24 @@ public class Account extends Customer implements MuaVeXemPhim {
     public void changePin() {
         try {
             System.out.println("\n\t\t------- Đổi Pin -------");
-
-            // Nhập PIN cũ
             System.out.print("Nhập pin cũ: ");
             int oldPin = Integer.parseInt(scanner.nextLine());
-
-            // Kiểm tra PIN cũ có chính xác không
             if (oldPin != this.pin) {
                 System.out.println("Pin cũ không chính xác !");
                 return;
             }
-
-            // Nhập PIN mới
             System.out.print("Nhập pin mới: ");
             int newPin = Integer.parseInt(scanner.nextLine());
             System.out.print("Nhập lại pin mới: ");
             int confirmPin = Integer.parseInt(scanner.nextLine());
-
-            // Kiểm tra độ dài PIN mới
             if (newPin < 100000) {
                 System.out.println("Pin phải có 6 chữ số !");
                 return;
             }
-
-            // Kiểm tra PIN mới có khớp không
             if (newPin != confirmPin) {
                 System.out.println("Pin nhập lại không chính xác !");
                 return;
             }
-
-            // Cập nhật PIN
             updatePin(newPin, "Đổi pin tại ATM");
             System.out.println(">>> Đổi pin thành công !");
         } catch (NumberFormatException e) {
@@ -205,6 +205,8 @@ public class Account extends Customer implements MuaVeXemPhim {
         } catch (Exception e) {
             System.out.println("Lỗi: " + e.getMessage());
         }
+
+
     }
 
     public void updatePin(int newPin, String description) {
@@ -213,6 +215,7 @@ public class Account extends Customer implements MuaVeXemPhim {
         }
         transactionDiary.add(new Transaction(this, 0, "Đổi Pin", description));
         this.pin = newPin;
+        saveData("account.txt");
     }
 
     public void checkBalance() {
@@ -260,7 +263,37 @@ public class Account extends Customer implements MuaVeXemPhim {
             for (SavingsAccount sa : savingsAccounts) {
                 System.out.println(sa);
             }
+            System.out.print("Nhập ID sổ tiết kiệm để rút tiền (hoặc 0 để quay lại): ");
+            int id = Integer.parseInt(scanner.nextLine());
+
+            if (id != 0) {
+                SavingsAccount savingsAccount = findSavingsAccountById(id);
+                if (savingsAccount != null) {
+                    System.out.print("Nhập số tiền cần rút: ");
+                    double amount = Double.parseDouble(scanner.nextLine());
+                    if (amount <= 0) {
+                        System.out.println("Lỗi: Số tiền cần rút phải lớn hơn 0!");
+                    } else {
+                        if (savingsAccount.withdraw(amount)) {
+                            System.out.println(">>> Rút tiền từ sổ tiết kiệm thành công!");
+                        } else {
+                            System.out.println(">>> Rút tiền không thành công. Vui lòng kiểm tra số dư.");
+                        }
+                    }
+                } else {
+                    System.out.println("Lỗi: Không tìm thấy sổ tiết kiệm với ID đã nhập!");
+                }
+            }
         }
+    }
+
+    private SavingsAccount findSavingsAccountById(int savingsAccountId) {
+        for (SavingsAccount account : savingsAccounts) {
+            if (account.getId() == savingsAccountId) {
+                return account;
+            }
+        }
+        return null;
     }
 
     public void calculateInterestForSavingsAccounts() {
@@ -303,13 +336,11 @@ public class Account extends Customer implements MuaVeXemPhim {
             String description = "Gửi tiền vào tài khoản tại ATM";
 
             if (accountType == 1) {
-                // Gửi vào tài khoản hiện tại
                 deposit(amount, description);
                 System.out.println(">>> Gửi tiền vào tài khoản hiện tại thành công !");
             } else if (accountType == 2) {
-                // Gửi vào sổ tiết kiệm
                 System.out.print("Nhập ID sổ tiết kiệm: ");
-                String savingsAccountId = scanner.nextLine().trim(); // Loại bỏ khoảng trắng
+                String savingsAccountId = scanner.nextLine().trim();
                 deposit(amount, description, savingsAccountId);
             } else {
                 System.out.println("Lỗi: Loại tài khoản không hợp lệ!");
@@ -325,14 +356,14 @@ public class Account extends Customer implements MuaVeXemPhim {
         NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
         transactionDiary.add(new Transaction(this, amount, "Gửi Tiền", description));
         System.out.println("Số tiền gửi: " + formatter.format(amount));
-        this.soDu += amount; // Cập nhật số dư tài khoản hiện tại
+        this.soDu += amount;
     }
 
     public void deposit(double amount, String description, String savingsAccountId) {
         SavingsAccount savingsAccount = findSavingsAccountById(savingsAccountId);
         if (savingsAccount != null) {
             NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
-            savingsAccount.deposit(amount, description); // Gọi phương thức deposit của tài khoản tiết kiệm
+            savingsAccount.deposit(amount, description);
             System.out.println("Số tiền gửi vào sổ tiết kiệm: " + formatter.format(amount));
         } else {
             System.out.println("Lỗi: Không tìm thấy sổ tiết kiệm với ID đã nhập!");
@@ -348,7 +379,7 @@ public class Account extends Customer implements MuaVeXemPhim {
                 return account; // Trả về tài khoản nếu tìm thấy
             }
         }
-        return null; // Trả về null nếu không tìm thấy
+        return null;
     }
 
     @Override
@@ -386,7 +417,8 @@ public class Account extends Customer implements MuaVeXemPhim {
                 break;
             case 11:
                 System.out.println("\t\tVietcombank ATM hẹn gặp lại quý khách !");
-                break; // Thoát vòng lặp
+                System.exit(0);
+                break;
             default:
                 System.out.println("Lựa chọn không hợp lệ.");
         }
@@ -439,7 +471,7 @@ public class Account extends Customer implements MuaVeXemPhim {
             System.out.println("\n\t\t------- Đặt Vé Xem Phim -------");
 
             System.out.print("Nhập tên phim: ");
-            String tenPhim = scanner.nextLine(); // Yêu cầu nhập tên phim
+            String tenPhim = scanner.nextLine();
 
             System.out.print("Nhập số lượng vé cần đặt: ");
             int soLuongVe = Integer.parseInt(scanner.nextLine());
@@ -450,21 +482,18 @@ public class Account extends Customer implements MuaVeXemPhim {
             System.out.print("Nhập thời gian xem phim (ví dụ: 20:00): ");
             String thoiGian = scanner.nextLine();
 
-            double giaVe = 100000; // Giả sử giá vé là 100,000 VNĐ
+            double giaVe = 100000;
             double tongTien = giaVe * soLuongVe;
 
             if (tongTien > this.soDu) {
                 System.out.println("Số dư không đủ để đặt vé. Cần thêm " + (tongTien - this.soDu) + " VNĐ.");
                 return "Đặt vé không thành công!";
             }
-
-            // Cập nhật số dư tài khoản
             this.soDu -= tongTien;
 
-            // Cập nhật mô tả bao gồm tên phim
             String description = "Đặt vé cho phim \"" + tenPhim + "\", số ghế: " + viTriGhe + ", số lượng: " + soLuongVe + ", thời gian: " + thoiGian;
             Transaction transaction = new Transaction(this, tongTien, "Mua Vé", description);
-            transactionDiary.add(transaction); // Thêm giao dịch vào nhật ký
+            transactionDiary.add(transaction);
 
             System.out.println(">>> Đặt vé xem phim thành công! Mã vé của bạn là: " + transaction.getLogID());
             return "Vé đã được đặt!";
@@ -482,14 +511,10 @@ public class Account extends Customer implements MuaVeXemPhim {
         System.out.println("\n\t\t------- Hủy Vé Xem Phim -------");
         System.out.print("Nhập mã vé (hoặc mô tả) cần hủy: ");
         String maVe = scanner.nextLine();
-
-        // Tìm kiếm vé trong nhật ký giao dịch
         for (Transaction transaction : transactionDiary) {
-            // Kiểm tra xem mã vé có khớp không và loại giao dịch là "Mua Vé"
             if (transaction.getLogID() == Integer.parseInt(maVe) && transaction.getLoaiGD().equals("Mua Vé")) {
-                // Hủy vé (hoàn lại tiền nếu cần)
-                transactionDiary.remove(transaction); // Xóa giao dịch vé
-                this.soDu += transaction.getSoTien(); // Hoàn lại số tiền vào tài khoản
+                transactionDiary.remove(transaction);
+                this.soDu += transaction.getSoTien();
                 System.out.println(">>> Hủy vé thành công!");
                 return "Vé đã được hủy!";
             }
@@ -540,13 +565,13 @@ public class Account extends Customer implements MuaVeXemPhim {
                         break;
                     case 5:
                         System.out.println("Quay lại menu chính.");
-                        break; // Kết thúc vòng lặp
+                        break;
                     default:
                         System.out.println("Lựa chọn không hợp lệ. Vui lòng chọn lại.");
                 }
             } catch (NumberFormatException e) {
                 System.out.println("Lỗi: Nhập sai kiểu số !");
-                option = -1; // Đặt lại option để tiếp tục vòng lặp
+                option = -1;
             }
         } while (option != 5); 
     }

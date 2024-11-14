@@ -3,7 +3,7 @@ package atm.app.baitap;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-public class SavingsAccount  {
+public class SavingsAccount {
     private static int count = 0;
     private int id;
     private double balance;
@@ -16,7 +16,6 @@ public class SavingsAccount  {
         this.interestRate = interestRate;
         this.startDate = java.time.LocalDate.now().toString();
     }
-
 
     public int getId() {
         return id;
@@ -35,14 +34,21 @@ public class SavingsAccount  {
     }
 
     public void deposit(double amount, String description) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Số tiền gửi phải lớn hơn 0!");
+        }
         this.balance += amount;
+        System.out.println(">>> Gửi tiền thành công: " + amount + " VNĐ vào sổ tiết kiệm ID: " + id);
     }
 
-    public void withdraw(double amount) {
+    public boolean withdraw(double amount) {
         if (amount > balance) {
-            throw new RuntimeException("Số dư không đủ để rút tiền từ sổ tiết kiệm!");
+            System.out.println("Lỗi: Số dư không đủ để rút tiền từ sổ tiết kiệm!");
+            return false;
         }
         this.balance -= amount;
+        System.out.println(">>> Rút tiền thành công: " + amount + " VNĐ từ sổ tiết kiệm ID: " + id);
+        return true;
     }
 
     public double calculateInterest(int months) {

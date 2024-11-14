@@ -1,16 +1,16 @@
 package atm.app.baitap;
+
+import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.Vector;
+
 public abstract class Menu {
-    protected Vector<String> luaChon = new Vector<String>(10, 5);
+    protected ArrayList<String> luaChon = new ArrayList<>(10);
+
     public Menu() {
     }
 
     public Menu(String[] inLuaChon) {
-        luaChon.clear();
-        for (String lc : inLuaChon) {
-            luaChon.add(lc);
-        }
+        setMenu(inLuaChon);
     }
 
     public void setMenu(String[] inLuaChon) {
@@ -21,8 +21,8 @@ public abstract class Menu {
     }
 
     public void display() {
-        System.out.println("\n\n\t\t\t" + luaChon.elementAt(1) + "\n");
-        System.out.println("-------- " + luaChon.elementAt(0) + " --------");
+        System.out.println("\n\n\t\t\t" + luaChon.get(1) + "\n");
+        System.out.println("-------- " + luaChon.get(0) + " --------");
         for (int i = 2; i < luaChon.size(); i++) {
             System.out.println(i - 1 + "." + luaChon.get(i));
         }
@@ -58,11 +58,11 @@ public abstract class Menu {
         } while (lc <= luaChon.size() - 2 && lc > 0);
     }
 
-    public Vector<String> getLuaChon() {
+    public ArrayList<String> getLuaChon() {
         return luaChon;
     }
 
-    public void setLuaChon(Vector<String> luaChon) {
+    public void setLuaChon(ArrayList<String> luaChon) {
         this.luaChon = luaChon;
     }
 }
