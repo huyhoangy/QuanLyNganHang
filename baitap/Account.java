@@ -439,13 +439,16 @@ public class Account extends Customer implements MuaVeXemPhim {
             System.out.println("\n\t\t------- Đặt Vé Xem Phim -------");
 
             System.out.print("Nhập tên phim: ");
-            String tenPhim = scanner.nextLine();
-
-            System.out.print("Nhập số ghế cần đặt: ");
-            int soGhe = Integer.parseInt(scanner.nextLine());
+            String tenPhim = scanner.nextLine(); // Yêu cầu nhập tên phim
 
             System.out.print("Nhập số lượng vé cần đặt: ");
             int soLuongVe = Integer.parseInt(scanner.nextLine());
+
+            System.out.print("Nhập vị trí ghế (ví dụ: A1, B2): ");
+            String viTriGhe = scanner.nextLine();
+
+            System.out.print("Nhập thời gian xem phim (ví dụ: 20:00): ");
+            String thoiGian = scanner.nextLine();
 
             double giaVe = 100000; // Giả sử giá vé là 100,000 VNĐ
             double tongTien = giaVe * soLuongVe;
@@ -455,12 +458,15 @@ public class Account extends Customer implements MuaVeXemPhim {
                 return "Đặt vé không thành công!";
             }
 
+            // Cập nhật số dư tài khoản
             this.soDu -= tongTien;
 
-            String description = "Đặt vé cho phim " + tenPhim + ", số ghế: " + soGhe + ", số lượng: " + soLuongVe;
-            transactionDiary.add(new Transaction(this, tongTien, "Mua Vé", description));
+            // Cập nhật mô tả bao gồm tên phim
+            String description = "Đặt vé cho phim \"" + tenPhim + "\", số ghế: " + viTriGhe + ", số lượng: " + soLuongVe + ", thời gian: " + thoiGian;
+            Transaction transaction = new Transaction(this, tongTien, "Mua Vé", description);
+            transactionDiary.add(transaction); // Thêm giao dịch vào nhật ký
 
-            System.out.println(">>> Đặt vé xem phim \"" + tenPhim + "\" thành công!");
+            System.out.println(">>> Đặt vé xem phim thành công! Mã vé của bạn là: " + transaction.getLogID());
             return "Vé đã được đặt!";
         } catch (NumberFormatException e) {
             System.out.println("Lỗi: Nhập sai kiểu số !");
@@ -473,8 +479,23 @@ public class Account extends Customer implements MuaVeXemPhim {
 
     @Override
     public String huyVe() {
-        System.out.println("Hủy vé xem phim thành công!");
-        return "Vé đã được hủy!";
+        System.out.println("\n\t\t------- Hủy Vé Xem Phim -------");
+        System.out.print("Nhập mã vé (hoặc mô tả) cần hủy: ");
+        String maVe = scanner.nextLine();
+
+        // Tìm kiếm vé trong nhật ký giao dịch
+        for (Transaction transaction : transactionDiary) {
+            // Kiểm tra xem mã vé có khớp không và loại giao dịch là "Mua Vé"
+            if (transaction.getLogID() == Integer.parseInt(maVe) && transaction.getLoaiGD().equals("Mua Vé")) {
+                // Hủy vé (hoàn lại tiền nếu cần)
+                transactionDiary.remove(transaction); // Xóa giao dịch vé
+                this.soDu += transaction.getSoTien(); // Hoàn lại số tiền vào tài khoản
+                System.out.println(">>> Hủy vé thành công!");
+                return "Vé đã được hủy!";
+            }
+        }
+        System.out.println("Lỗi: Không tìm thấy vé với mã đã nhập!");
+        return "Hủy vé không thành công!";
     }
 
     @Override
@@ -504,17 +525,17 @@ public class Account extends Customer implements MuaVeXemPhim {
 
                 switch (option) {
                     case 1:
-                        datVe(); // Gọi phương thức đặt vé
+                        datVe();
                         break;
                     case 2:
-                        huyVe(); // Gọi phương thức hủy vé
+                        huyVe();
                         break;
                     case 3:
-                        String movieInfo = kiemTraPhim(); // Gọi phương thức kiểm tra phim
+                        String movieInfo = kiemTraPhim();
                         System.out.println(movieInfo);
                         break;
                     case 4:
-                        String ticketInfo = xemThongTinVe(); // Gọi phương thức xem thông tin vé
+                        String ticketInfo = xemThongTinVe();
                         System.out.println(ticketInfo);
                         break;
                     case 5:
@@ -527,6 +548,6 @@ public class Account extends Customer implements MuaVeXemPhim {
                 System.out.println("Lỗi: Nhập sai kiểu số !");
                 option = -1; // Đặt lại option để tiếp tục vòng lặp
             }
-        } while (option != 5); // Tiếp tục cho đến khi người dùng chọn quay lại
+        } while (option != 5); 
     }
 }

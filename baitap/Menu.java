@@ -2,7 +2,7 @@ package atm.app.baitap;
 import java.util.Scanner;
 import java.util.Vector;
 public abstract class Menu {
-    private Vector<String> luaChon = new Vector<String>(10, 5);
+    protected Vector<String> luaChon = new Vector<String>(10, 5);
     public Menu() {
     }
 
